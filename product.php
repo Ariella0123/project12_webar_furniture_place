@@ -8,7 +8,7 @@ $product = get_product_by_slug($pdo, $slug);
 
 if (!$product) {
     http_response_code(404);
-    die('<div style="font-family:sans-serif; text-align:center; padding:100px;"><h2>Product Not Found</h2><a href="index.php">← Back to Catalog</a></div>');
+    die('<div style="font-family:sans-serif; text-align:center; padding:100px;"><h2>Product Not Found</h2><p><a href="index.php">← Back to Catalog</a></p></div>');
 }
 ?>
 <!DOCTYPE html>
@@ -18,8 +18,34 @@ if (!$product) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= sanitize_output($product['name']) ?> - LuxeAR</title>
     <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <!-- Google <model-viewer> Web Component -->
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
+    <style>
+        /* AR 按钮专属样式：确保在手机端醒目 */
+        .ar-btn-custom {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+            cursor: pointer;
+            z-index: 99;
+        }
+        .ar-btn-custom:active {
+            transform: scale(0.96);
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -31,81 +57,56 @@ if (!$product) {
         </div>
     </header>
 
-    <main class="container">
+    <main class="container" style="padding-top: 20px; padding-bottom: 40px;">
         <div class="product-detail-grid">
-            <!-- 3D & AR Interactive Area -->
-            <div class="viewer-container">
+            
+            <!-- 3D & Camera AR 展示区 -->
+            <div class="viewer-container" style="position: relative; background: #f8fafc; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+                
                 <model-viewer 
                     id="furniture-viewer"
                     src="<?= sanitize_output($product['glb_path']) ?>" 
                     <?= !empty($product['usdz_path']) ? 'ios-src="' . sanitize_output($product['usdz_path']) . '"' : '' ?>
-                    alt="<?= sanitize_output($product['name']) ?> 3D Model"
-                    
-                    <!-- 基础控制与交互 -->
+                    alt="<?= sanitize_output($product['name']) ?>"
+                    ar
+                    ar-modes="webxr scene-viewer quick-look" 
+                    ar-placement="floor"
+                    ar-scale="fixed"
                     camera-controls 
                     auto-rotate
-                    auto-rotate-delay="3000"
-                    rotation-per-second="30deg"
                     shadow-intensity="1.5"
-                    shadow-softness="0.8"
-                    exposure="1"
+                    style="width: 100%; height: 420px; display: block;">
                     
-                    <!-- 移动端 AR 保持配置 -->
-                    ar 
-                    ar-modes="webxr scene-viewer quick-look" 
-                    touch-action="pan-y">
-                    
-                    <!-- 1. 移动端 AR 按钮 -->
+                    <!-- 【核心】唤起手机摄像头的 AR 按钮 -->
                     <button slot="ar-button" class="ar-btn-custom">
-                        📱 View in Your Room
+                        📷 开启摄像头看 AR 效果
                     </button>
 
-                    <!-- 2. [新增] 桌面端全屏查看按钮 -->
-                    <button id="fullscreen-btn" class="desktop-btn-custom">
-                        ⛶ 全屏查看模型
-                    </button>
-
-                    <!-- 3. [新增] 桌面端重置视角按钮 -->
-                    <button id="reset-cam-btn" class="desktop-btn-custom reset-btn">
-                        ↺ 重置视角
-                    </button>
                 </model-viewer>
 
-                <!-- [新增] 桌面端鼠标操作提示 -->
-                <div class="desktop-hint">
-                    💡 提示：按住鼠标左键旋转 | 滚轮缩放 | 按住右键平移
-                </div>
-
-                <div id="ar-notice" style="display:none; position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); color:#fff; padding:6px 12px; border-radius:4px; font-size:0.8rem;"></div>
             </div>
 
-            <!-- Product Detail Info -->
-            <div class="product-info-panel">
-                <span class="card-category"><?= sanitize_output($product['category_name']) ?></span>
-                <h1><?= sanitize_output($product['name']) ?></h1>
-                <div class="price-tag"><?= format_price($product['price'], $product['currency']) ?></div>
+            <!-- 产品详情信息 -->
+            <div class="product-info-panel" style="margin-top: 20px;">
+                <span class="card-category"><?= sanitize_output($product['category_name'] ?? 'Furniture') ?></span>
+                <h1 style="margin: 10px 0; font-size: 1.8rem; color: #0f172a;"><?= sanitize_output($product['name']) ?></h1>
+                <div class="price-tag" style="font-size: 1.4rem; font-weight: 700; color: #2563eb; margin-bottom: 15px;">
+                    <?= format_price($product['price'], $product['currency'] ?? 'USD') ?>
+                </div>
                 
-                <p style="color:var(--text-muted);"><?= nl2br(sanitize_output($product['description'])) ?></p>
+                <p style="color: #64748b; line-height: 1.6; margin-bottom: 20px;">
+                    <?= nl2br(sanitize_output($product['description'])) ?>
+                </p>
 
-                <!-- Dimensions Display -->
-                <?php if ($product['width_cm'] || $product['height_cm'] || $product['depth_cm']): ?>
-                <div class="dim-box">
-                    <strong>Real-World Dimensions (Scale 1:1)</strong>
-                    <div class="dim-grid">
-                        <div class="dim-item"><val><?= $product['width_cm'] ?: '-' ?> cm</val><lbl>Width</lbl></div>
-                        <div class="dim-item"><val><?= $product['height_cm'] ?: '-' ?> cm</val><lbl>Height</lbl></div>
-                        <div class="dim-item"><val><?= $product['depth_cm'] ?: '-' ?> cm</val><lbl>Depth</lbl></div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                <div class="qr-box" style="margin:20px 0 0 0; width:100%; display:flex; gap:15px; align-items:center; text-align:left; background:var(--bg-light); border: 1px solid var(--border-color);">
-                    <div id="qrcode"></div>
+                <!-- 扫码体验提示 -->
+                <div class="qr-box" style="display: flex; gap: 15px; align-items: center; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div id="qrcode" style="padding: 5px; background: #fff; border-radius: 4px; border: 1px solid #cbd5e1;"></div>
                     <div>
-                        <strong style="display:block; font-size:0.9rem;">Open on your phone</strong>
-                        <span style="font-size:0.8rem; color:var(--text-muted);">Scan this QR code with your mobile camera to quickly view this item in AR.</span>
+                        <strong style="display: block; font-size: 0.9rem; color: #0f172a; margin-bottom: 4px;">手机扫码唤起摄像头</strong>
+                        <span style="font-size: 0.8rem; color: #64748b;">用手机扫描此二维码，点击右下角按钮即可调用相机查看真实效果。</span>
                     </div>
                 </div>
+
             </div>
         </div>
     </main>
