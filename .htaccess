@@ -1,0 +1,7 @@
+Options -Indexes
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+AddType model/gltf-binary .glb
+AddType model/gltf+json .gltf
+AddType model/vnd.usdz+zip .usdz

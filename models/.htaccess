@@ -1,0 +1,5 @@
+# 拦截所有敏感环境/配置文件访问
+<FilesMatch "^\.env|^\.env\.|\.sql$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
