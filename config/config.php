@@ -18,9 +18,9 @@ return [
     ],
     'db' => [
         'host' => env('DB_HOST', 'localhost'),
-        'name' => env('DB_NAME', 'ar_furniture'),
-        'user' => env('DB_USER', 'root'),
-        'pass' => env('DB_PASS', '1234'),
+        'name' => env('DB_NAME', 'synergy1_yuxuan_project12_webar_furniture_place'),
+        'user' => env('DB_USER', 'synergy1_yenping'),
+        'pass' => env('DB_PASS', 'R.zb0ZwEuGZ}*fW2'),
         'charset' => env('DB_CHARSET', 'utf8mb4'),
         'port' => env('DB_PORT','3307')
     ],
